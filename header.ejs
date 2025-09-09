@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="<%= locale %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= __("Rythu Bazar Real-time App") %></title>
+  <link rel="stylesheet" href="/styles/style.css">
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- Google Translate Styles -->
+  <style>
+    .goog-te-banner-frame.skiptranslate {
+      display: none !important;
+    }
+    body {
+      top: 0px !important;
+    }
+    .goog-te-gadget {
+      font-size: 16px !important;
+      color: #ff0000 !important; /* Match your color scheme */
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Colored Header -->
+  <header style="background-color: #00ffd0; padding: 15px 0; text-align: center; color: #171010;">
+    <h1>RYTHU BAZAR APP</h1>
+  </header>
+
+  <!-- Google Translate Widget -->
+  <div id="google_translate_element"style="text-align: center; margin: 10px 0;"></div>
+  
+
+
+
+
+
+  
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en', // Default language (English)
+        includedLanguages: 'en,hi,te', // Enable Hindi & Telugu
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" 
+    src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit">
+  </script>
+</body>
+</html>

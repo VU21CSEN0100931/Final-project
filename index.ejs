@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="<%= locale %>">
+<head>
+    <meta charset="UTF-8">
+    <title><%= __("Rythu Bazar Real-time App") %></title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div id="language-switcher">
+      <a href="?lang=en">English</a> | 
+      <a href="?lang=hi">हिन्दी</a> | 
+      <a href="?lang=te">తెలుగు</a>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <nav>
+        <button id="nav-login"><%= __("Login") %></button>
+        <button id="nav-signup"><%= __("Sign Up") %></button>
+        <button id="nav-admin"><%= __("Admin Dashboard") %></button>
+        <button id="nav-customer"><%= __("Customer View") %></button>
+        <button id="nav-logout" style="display:none;"><%= __("Logout") %></button>
+    </nav>
+
+    <!-- Login Section -->
+    <section id="login-section" style="display:none;">
+        <h2><%= __("Login") %></h2>
+        <form id="login-form">
+            <label><%= __("Username") %>:</label>
+            <input type="text" name="username" required>
+            <label><%= __("Password") %>:</label>
+            <input type="password" name="password" required>
+            <button type="submit"><%= __("Login") %></button>
+        </form>
+        <p id="login-message"></p>
+    </section>
+
+    <!-- Signup Section -->
+    <section id="signup-section" style="display:none;">
+        <h2><%= __("Sign Up") %></h2>
+        <form id="signup-form">
+            <label><%= __("Username") %>:</label>
+            <input type="text" name="username" required>
+            <label><%= __("Password") %>:</label>
+            <input type="password" name="password" required>
+            <button type="submit"><%= __("Sign Up") %></button>
+        </form>
+        <p id="signup-message"></p>
+    </section>
+
+    <!-- Admin Section -->
+    <section id="admin-section" style="display:none;">
+        <h2><%= __("Admin Dashboard") %></h2>
+        <form id="admin-update-form">
+            <label><%= __("Rythu Bazar Name") %>:</label>
+            <input type="text" name="bazaarName" required>
+            <label><%= __("Items (JSON format)") %>:</label>
+            <textarea name="items" placeholder='[{"name":"Tomato","image":"url","price":30}]' required></textarea>
+            <label><%= __("Seasonal Highlights") %>:</label>
+            <textarea name="seasonalHighlights" required></textarea>
+            <label><%= __("Available Quantity") %>:</label>
+            <input type="number" name="availableQuantity" required>
+            <button type="submit"><%= __("Update") %></button>
+        </form>
+        <p id="admin-message"></p>
+    </section>
+
+    <!-- Customer Section -->
+    <section id="customer-section" style="display:none;">
+        <h2><%= __("Latest Price Update") %></h2>
+        <div id="latest-update"></div>
+        <h2><%= __("Historical Data") %></h2>
+        <canvas id="priceChart" width="400" height="200"></canvas>
+    </section>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

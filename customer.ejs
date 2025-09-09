@@ -1,0 +1,334 @@
+
+
+<style>
+  .filter-dropdown {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+
+  .item-card {
+    flex: 0 0 280px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    text-align: center;
+  }
+
+  .item-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .history-btn, .chart-btn {
+    padding: 8px 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 5px;
+  }
+
+  .history-btn:hover, .chart-btn:hover {
+    background-color: #0056b3;
+  }
+
+  /* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%; /* Adjusted width */
+  max-width: 500px; /* Set max width */
+  height: auto; /* Adjust height dynamically */
+  background-color: rgba(0, 0, 0, 0.5);
+  overflow: auto; /* Enable scrolling if needed */
+  border-radius: 10px;
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: #fff;
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 100%;
+  max-height: 90vh; /* Prevents pop-up from going outside the screen */
+  overflow-y: auto; /* Enable vertical scrolling */
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Close Button */
+.close {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Ensure Chart Fits Inside Modal */
+canvas {
+  width: 100% !important;
+  max-height: 300px !important; /* Limits chart height */
+}
+
+</style>
+
+
+<!-- Navigation -->
+<nav style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #5a5a5a;">
+  <a href="/" style="text-decoration: none; color: white; font-size: 18px; font-weight: bold;">🏠Home</a>
+  <h1 style="color: white; text-align: center; font-size: 22px;">Customer Dashboard</h1>
+  <div></div> 
+</nav>
+<!-- Google Translate Widget -->
+<h1><div id="google_translate_element"style="text-align: center; margin: 10px 0;"></div></h1>
+
+<!-- Filters Section -->
+<div class="filters" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding: 20px; background: #f1f1f1; border-radius: 8px; margin: 20px auto; max-width: 80%;">
+  <label for="seasonFilter"><b>Seasonal Highlights:</b></label>
+  <select id="seasonFilter" class="filter-dropdown">
+    <option value="">All</option>
+    <option value="true">Yes</option>
+    <option value="false">No</option>
+  </select>
+
+  <label for="priceFilter"><b>Sort by Price:</b></label>
+  <select id="priceFilter" class="filter-dropdown">
+    <option value="default">Default</option>
+    <option value="low-to-high">Low to High</option>
+    <option value="high-to-low">High to Low</option>
+  </select>
+
+  <label for="typeFilter"><b>Item Type:</b></label>
+  <select id="typeFilter" class="filter-dropdown">
+    <option value="">All</option>
+    <option value="Vegetable">Vegetable</option>
+    <option value="Fruit">Fruit</option>
+  </select>
+
+  <label for="bazaarNameFilter"><b>Raithu Bazaar Name:</b></label>
+  <select id="bazaarNameFilter" class="filter-dropdown">
+    <option value="">All</option>
+    <option value="Bazaar 1">Bazaar 1</option>
+    <option value="Bazaar 2">Bazaar 2</option>
+    <option value="Bazaar 3">Bazaar 3</option>
+    <option value="Bazaar 4">Bazaar 4</option>
+  </select>
+</div>
+
+<!-- Items Grid -->
+<div class="item-container" id="customer-items" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;"></div>
+
+<!-- Price Chart Modal -->
+<div id="priceChartModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeChartModal()">&times;</span>
+    <h2>Price Comparison Across Bazaars</h2>
+    <canvas id="priceComparisonChart"></canvas>
+  </div>
+</div>
+
+<!-- Price History Modal -->
+<div id="priceHistoryModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeHistoryModal()">&times;</span>
+    <h2>Price History</h2>
+    <canvas id="priceHistoryChart"></canvas>
+  </div>
+</div>
+
+
+<!-- External Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+  fetchItems();
+
+  document.getElementById("seasonFilter").addEventListener("change", applyFilters);
+  document.getElementById("priceFilter").addEventListener("change", applyFilters);
+  document.getElementById("typeFilter").addEventListener("change", applyFilters);
+  document.getElementById("bazaarNameFilter").addEventListener("change", applyFilters);
+});
+
+function fetchItems(filters = {}) {
+  let queryString = Object.entries(filters).map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join("&");
+  let url = `/api/priceUpdates?${queryString}`;
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      let container = document.getElementById('customer-items');
+      if (data.success && data.history.length > 0) {
+        container.innerHTML = data.history.map(item => `
+          <div class="item-card">
+            <img src="${item.item.image}" alt="${item.item.name}">
+            <h3>${item.item.name}</h3>
+            <p><b>Rythu Bazaar:</b> ${item.bazaarName}</p>
+            <p><b>Price:</b> ₹${item.item.price}</p>
+            <p><b>Approx available quantity:</b> ${item.availableQuantity} KG</p>
+            <p><b>Type:</b> ${item.itemType}</p>
+            <button class="chart-btn" onclick="showPriceChart('${item.item.name}')">📊 Price Chart</button>
+<button class="history-btn" onclick="showPriceHistory('${item.item.name}', '${item.bazaarName}')">
+  📉 View Price History
+</button>
+
+          </div>
+        `).join('');
+      } else {
+        container.innerHTML = '<p style="text-align: center;">No items found.</p>';
+      }
+    })
+    .catch(err => console.error("Error fetching items:", err));
+}
+
+function applyFilters() {
+  let filters = {
+    seasonalHighlights: document.getElementById("seasonFilter").value,
+    sortByPrice: document.getElementById("priceFilter").value !== "default" ? document.getElementById("priceFilter").value : undefined,
+    itemType: document.getElementById("typeFilter").value,
+    bazaarName: document.getElementById("bazaarNameFilter").value
+  };
+  fetchItems(filters);
+}
+
+let priceChartInstance = null;
+
+function showPriceChart(itemName) {
+    fetch(`/api/comparePriceHistory/${encodeURIComponent(itemName)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                openChartModal(); // ✅ Now this function is defined
+                setTimeout(() => { renderComparisonChart(data.history); }, 500);
+            } else {
+                alert("No price comparison data found.");
+            }
+        })
+        .catch(err => console.error("Error fetching price comparison:", err));
+}
+
+
+
+function showPriceHistory(itemName, bazaarName) {
+  fetch(`/api/singlePriceHistory/${encodeURIComponent(itemName)}/${encodeURIComponent(bazaarName)}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        openHistoryModal();
+        renderHistoryChart(data.history);
+      } else {
+        alert("No price history available for this item.");
+      }
+    })
+    .catch(err => console.error("Error fetching price history:", err));
+}
+
+function renderHistoryChart(history) {
+  const ctx = document.getElementById("priceHistoryChart").getContext("2d");
+
+  if (window.historyChartInstance) {
+    window.historyChartInstance.destroy();
+  }
+
+  const labels = history.map(entry => new Date(entry.date).toLocaleDateString());
+  const prices = history.map(entry => entry.price);
+
+  window.historyChartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Price Over Time",
+        data: prices,
+        borderColor: "red",
+        backgroundColor: "rgba(255, 0, 0, 0.2)",
+        fill: true,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: false,
+        },
+      },
+    },
+  });
+}
+
+function renderComparisonChart(history) {
+    const ctx = document.getElementById("priceComparisonChart").getContext("2d");
+
+    // Destroy previous chart if it exists
+    if (window.priceChartInstance) {
+        window.priceChartInstance.destroy();
+    }
+
+    const labels = history.map(entry => entry.bazaarName);
+    const prices = history.map(entry => entry.price);
+
+    window.priceChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Price Comparison Across Bazaars",
+                data: prices,
+                backgroundColor: "blue",
+                borderColor: "black",
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+
+
+function openHistoryModal() { 
+  document.getElementById("priceHistoryModal").style.display = "block"; 
+}
+
+function closeHistoryModal() { 
+  document.getElementById("priceHistoryModal").style.display = "none"; 
+}
+function openChartModal() { 
+    document.getElementById("priceChartModal").style.display = "block"; 
+}
+
+function closeChartModal() { 
+    document.getElementById("priceChartModal").style.display = "none"; 
+}
+
+
+</script>
+<script type="text/javascript">
+  function googleTranslateElementInit() {
+    new google.translate.TranslateElement({
+      pageLanguage: 'en', // Default language (English)
+      includedLanguages: 'en,hi,te', // Enable Hindi & Telugu
+      layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+    }, 'google_translate_element');
+  }
+</script>
+<script type="text/javascript" 
+  src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit">
+</script>
+
+<%- include('partials/footer') %>

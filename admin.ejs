@@ -1,0 +1,300 @@
+
+
+<!-- Navigation Bar -->
+<nav style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #8b8b8f;">
+  <div>
+    <a href="/" style="text-decoration: none; color: #fefefe; font-weight: bold;">🏠Home</a>
+  </div>
+  
+  <div>
+    <h1 style="text-align: center;">Admin Dashboard</h1>
+  </div>
+  
+  <!-- Profile Icon -->
+  <div style="position: relative;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Profile" onclick="toggleProfileMenu()"
+      style="width: 40px; height: 40px; cursor: pointer; border-radius: 50%; border: 2px solid #ccc;">
+      
+    
+    <!-- Profile Dropdown -->
+    <div id="profileMenu" style="
+      display: none;
+      position: absolute; right: 0; top: 50px;
+      background: white; border: 1px solid #ccc; border-radius: 5px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+      width: 200px; text-align: center;">
+
+      <p style="margin: 10px 0; font-weight: bold;"><%= user.username %></p>
+      <hr style="margin: 5px 0;">
+      <a href="/logout" style="display: block; padding: 10px; color: red; text-decoration: none;">Logout</a>
+      <button onclick="deleteAccount()" style="
+        background: none; border: none; color: red; width: 100%;
+        padding: 10px; cursor: pointer; font-size: 14px;">Delete Account</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Google Translate Widget -->
+<h1><div id="google_translate_element"style="text-align:right; margin: 10px 0;"></div></h1>
+
+  <!-- Beautifully Styled Add New Item Section -->
+
+<div style="
+max-width: 600px; margin: 30px auto; padding: 25px; 
+background: linear-gradient(135deg, #f9f9f9, #e3e3e3); 
+border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+text-align: center;">
+
+<h2 style="color: #333; font-size: 24px; margin-bottom: 20px;">Add New Item</h2>
+
+<form action="/api/admin/update" method="POST" enctype="multipart/form-data" id="adminForm"
+  style="display: flex; flex-direction: column; gap: 15px;">
+
+  <!-- Restrict Admin to Only Their Assigned Bazaar -->
+  <label style="font-weight: bold; text-align: left;">Rythu Bazaar Name:</label>
+  <input type="text" name="bazaarName" value="<%= user.bazaarName %>" readonly 
+    style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; background: #e9ecef;">
+
+  <input type="text" name="itemName" placeholder="Item Name" required
+    style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+  <input type="number" name="itemPrice" placeholder="Price (₹)" required
+    style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+    <label style="font-weight: bold; text-align: left;">Approx available quantity Enter in KGS:</label>
+  <input type="number" name="availableQuantity" placeholder=" Approx available quantity Enter in KGS" required
+    style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+  
+
+  <label style="font-weight: bold; text-align: left;">Seasonal Highlights:</label>
+  <select name="seasonalHighlights" required style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+    <option value="true">Yes</option>
+    <option value="false">No</option>
+  </select>
+
+  <label style="font-weight: bold; text-align: left;">Item Type:</label>
+  <select name="itemType" required style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+    <option value="Vegetable">Vegetable</option>
+    <option value="Fruit">Fruit</option>
+  </select>
+
+  <label style="font-weight: bold; text-align: left;">Upload Item Image:</label>
+  <input type="file" name="itemImage" accept="image/*" required
+    style="padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+
+  <button type="submit" style="
+    padding: 12px; background-color: #28a745; color: white; border: none;
+    cursor: pointer; border-radius: 5px; font-size: 16px;">Add/Update Item</button>
+</form>
+
+<div id="admin-message" style="color:red; margin-top: 10px;"></div>
+</div>
+
+
+  <!-- Items Grid: Display items in a fixed-size, 3-per-row layout -->
+  <h2 style="text-align: center;">Manage Items</h2>
+  <div class="item-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+    <% if (history && history.length> 0) { %>
+      <% history.forEach(function(item) { %>
+        <div class="item" data-bazaar="<%= item.bazaarName %>" data-admin="<%= item.adminId %>"
+          style="flex: 0 0 300px; height: 450px; border: 1px solid #ccc; padding: 10px; border-radius: 8px; background: #f9f9f9; text-align: center;">
+
+          <img src="<%= item.item.image %>" alt="<%= item.item.name %>"
+            style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px;">
+          <h3 style="margin: 10px 0;">
+            <%= item.item.name %>
+          </h3>
+          <p>Rythu Bazaar: <%= item.bazaarName %>
+          </p>
+          <p>Price: ₹<span id="price-<%= item._id %>">
+              <%= item.item.price %>
+            </span></p>
+          <p>Approx available quantity: <span id="quantity-<%= item._id %>">
+              <%= item.availableQuantity %> KG
+            </span></p>
+          <p>Type: <%= item.itemType %>
+          </p>
+          <p>Seasonal: <span id="seasonal-<%= item._id %>">
+              <%= item.seasonalHighlights ? 'Yes' : 'No' %>
+            </span></p>
+<!-- Modify and Delete Buttons -->
+<% if (user && item.adminId && String(user._id) === String(item.adminId)) { %>
+  <button onclick="modifyItem('<%= item._id %>')">Modify</button>
+  <button onclick="deleteItem('<%= item._id %>')">Delete</button>
+<% } else { %>
+  <p style="color: red;">You don't have permission to modify this item.</p>
+<% } %>
+        </div>
+        <% }); %>
+          <% } else { %>
+            <p style="text-align: center; width: 100%;">No items available.</p>
+            <% } %>
+  </div>
+
+
+  <!-- Modify Item Modal -->
+  <div id="modifyModal" class="modal"
+    style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content"
+      style="background-color: #fff; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 60%; text-align: center; position: relative;">
+      <span class="close" onclick="closeModifyModal()"
+        style="position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer;">&times;</span>
+      <h2>Modify Item</h2>
+      <form id="modifyForm">
+        <input type="hidden" id="modifyItemId">
+        <label for="modifyPrice">Price:</label>
+        <input type="number" id="modifyPrice" required><br>
+
+        <label for="modifyQuantity">Available Quantity:</label>
+        <input type="number" id="modifyQuantity" required><br>
+
+        <label for="modifySeasonal">Seasonal Highlights:</label>
+        <select id="modifySeasonal" required>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select><br>
+
+        <button type="submit">Update</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Open Modify Modal and fill in existing data
+    function modifyItem(id) {
+      document.getElementById('modifyItemId').value = id;
+      document.getElementById('modifyPrice').value = document.getElementById('price-' + id).innerText;
+      document.getElementById('modifyQuantity').value = document.getElementById('quantity-' + id).innerText;
+      document.getElementById('modifySeasonal').value = document.getElementById('seasonal-' + id).innerText.trim() === 'Yes' ? 'true' : 'false';
+      document.getElementById('modifyModal').style.display = 'block';
+    }
+    function filterItems() {
+      const selectedBazaar = document.getElementById('bazaarFilter').value;
+      const items = document.querySelectorAll('.item');
+
+      items.forEach(item => {
+        const itemBazaar = item.getAttribute('data-bazaar'); // Get the item's Bazaar Name
+        if (selectedBazaar === "" || itemBazaar === selectedBazaar) {
+          item.style.display = "block"; // Show item if it matches filter
+        } else {
+          item.style.display = "none"; // Hide item if it does not match filter
+        }
+      });
+    }
+    // Close Modify Modal
+    function closeModifyModal() {
+      document.getElementById('modifyModal').style.display = 'none';
+    }
+
+    // Handle Modify Form Submission
+    document.getElementById('modifyForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      var id = document.getElementById('modifyItemId').value;
+      var updatedData = {
+        itemPrice: document.getElementById('modifyPrice').value,
+        availableQuantity: document.getElementById('modifyQuantity').value,
+        seasonalHighlights: document.getElementById('modifySeasonal').value
+      };
+
+      fetch('/api/admin/update/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+      })
+        .then(response => response.json())
+        .then(data => {
+          alert(data.message);
+          if (data.success) {
+            location.reload();
+          }
+        })
+        .catch(err => {
+          console.error('Error updating item:', err);
+          alert('Error updating item.');
+        });
+    });
+
+    // Delete Item
+    function deleteItem(id) {
+      if (confirm('Are you sure you want to delete this item?')) {
+        fetch('/api/admin/delete/' + id, { method: 'DELETE' })
+          .then(response => response.json())
+          .then(data => {
+            alert(data.message);
+            if (data.success) {
+              location.reload();
+            }
+          })
+          .catch(err => {
+            console.error('Error deleting item:', err);
+            alert('Error deleting item.');
+          });
+      }
+    }
+    // Handle Add/Update Item Form Submission  
+    document.getElementById('adminForm').addEventListener('submit', function (event) {
+      event.preventDefault(); // Prevent default form submission
+
+      const formData = new FormData(this);
+
+      fetch('/api/admin/update', {
+        method: 'POST',
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert("Item added/updated successfully!");
+            location.reload(); // Reload admin dashboard
+          } else {
+            document.getElementById('admin-message').innerText = data.message;
+          }
+        })
+        .catch(err => {
+          console.error('Error:', err);
+          document.getElementById('admin-message').innerText = 'An error occurred while updating the item.';
+        });
+    });
+    // Toggle profile menu visibility
+  function toggleProfileMenu() {
+    const menu = document.getElementById('profileMenu');
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+  }
+
+  // Close menu when clicking outside
+  document.addEventListener('click', function(event) {
+    const profileMenu = document.getElementById('profileMenu');
+    const profileIcon = document.querySelector('img[onclick="toggleProfileMenu()"]');
+    
+    if (profileMenu.style.display === 'block' && event.target !== profileMenu && event.target !== profileIcon) {
+      profileMenu.style.display = 'none';
+    }
+  });
+
+  // Delete account function
+  function deleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      fetch('/api/deleteAccount', { method: 'DELETE' })
+        .then(response => response.json())
+        .then(data => {
+          alert(data.message);
+          if (data.success) {
+            window.location.href = '/login'; // Redirect to login after deletion
+          }
+        })
+        .catch(err => alert('Error deleting account.'));
+    }
+  }
+  </script>
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en', // Default language (English)
+        includedLanguages: 'en,hi,te', // Enable Hindi & Telugu
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" 
+    src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit">
+  </script>
+
+  <%- include('partials/footer') %>
